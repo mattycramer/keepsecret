@@ -1,0 +1,29 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Codex <codex@openai.com>
+Date: Thu, 2 Apr 2026 00:00:00 +0000
+Subject: [PATCH] Set desktop file name for Wayland compositors
+
+Labwc and other wlroots compositors rely on the Wayland app_id matching the
+desktop entry basename. KeepSecret installs `org.kde.keepsecret.desktop`, but
+the binary name is just `keepsecret`, so Qt can otherwise expose a mismatched
+app_id and break icon or launcher association.
+---
+ src/main.cpp | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/src/main.cpp b/src/main.cpp
+--- a/src/main.cpp
++++ b/src/main.cpp
+@@ -53,6 +53,10 @@ int main(int argc, char *argv[])
+ 
+     KLocalizedString::setApplicationDomain("keepsecret");
+     QCoreApplication::setOrganizationName(u"KDE"_s);
++    // Keep the Wayland app_id aligned with the installed desktop file so
++    // wlroots compositors such as labwc can match launcher metadata, icons,
++    // and window rules correctly.
++    QGuiApplication::setDesktopFileName(u"org.kde.keepsecret"_s);
+ 
+     KAboutData aboutData(
+         // The program name used internally.
+-- 
+2.49.0

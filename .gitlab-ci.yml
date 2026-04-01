@@ -1,1 +1,60 @@
-# .gitlab-ci.yml
+workflow:
+  rules:
+    - if: '$CI_COMMIT_REF_PROTECTED == "true" && $CI_COMMIT_TAG =~ /(^[0-9]$|^[0-9A-Za-z][0-9A-Za-z._-]{0,33}[0-9]$)/'
+    - if: '$CI_COMMIT_REF_PROTECTED == "true" && $CI_COMMIT_BRANCH == "mcr/staging"'
+    - if: '$CI_COMMIT_REF_PROTECTED == "true" && $CI_COMMIT_BRANCH == "mcr/release" && $GH_RELEASE_PUSH == "true"'
+    - when: never
+
+stages:
+  - test
+  - gitlab-release
+  - github-sync
+  - gitlab-cleanup
+
+include:
+  - project: '${GL_CICD_SHARED_PROJ}'
+    ref: main
+    file: '/release/common.yml'
+  - project: '${GL_CICD_SHARED_PROJ}'
+    ref: main
+    file: '/gitlab/common.yml'
+  - project: '${GL_CICD_SHARED_PROJ}'
+    ref: main
+    file: '/gitlab/validate.yml'
+  - project: '${GL_CICD_SHARED_PROJ}'
+    ref: main
+    file: '/gitlab/release.yml'
+  - project: '${GL_CICD_SHARED_PROJ}'
+    ref: main
+    file: '/keepsecret/test.yml'
+  - project: '${GL_CICD_SHARED_PROJ}'
+    ref: main
+    file: '/keepsecret/release-build.yml'
+  - project: '${GL_CICD_SHARED_PROJ}'
+    ref: main
+    file: '/github/common.yml'
+  - project: '${GL_CICD_SHARED_PROJ}'
+    ref: main
+    file: '/github/validate.yml'
+  - project: '${GL_CICD_SHARED_PROJ}'
+    ref: main
+    file: '/github/push.yml'
+  - project: '${GL_CICD_SHARED_PROJ}'
+    ref: main
+    file: '/gitlab/cleanup.yml'
+
+variables:
+  GH_RELEASE_PUSH: "true"
+  GH_FORCE_PUSH: "true"
+  GL_RELEASE_ASSET: "true"
+  GL_CLEAR_GLAB: "false"
+  APPEND_VERSION: "false"
+  APPLY_PATCHES: "true"
+  APPLY_PATCHES_EXCLUDE: ""
+  PATCH_RELEASE_DIR: "patches/release"
+  PATCH_SERIES_FILE: "patches/release/series"
+  PATCH_SYNC_SOURCE_BRANCH: "gitlab/mcr/main"
+  GIT_BRANCH_PREFIX: "mcr"
+  GIT_BRANCH_RELEASE: "release"
+  GL_CICD_RUNNER_BUILD: '${GL_CICD_RUNNER_UBUNTU}'
+  GL_CICD_RUNNER_RELEASE: '${GL_CICD_RUNNER_UBUNTU}'
