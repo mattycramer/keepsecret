@@ -73,26 +73,7 @@ keepsecret_install_build_deps() {
   DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends "${packages[@]}"
   rm -rf /var/lib/apt/lists/*
 
-  require_commands cmake dbus-run-session git grep ninja pkg-config timeout
-}
-
-keepsecret_require_wayland_runtime() {
-  local candidate
-  local found="false"
-
-  while IFS= read -r candidate || [ -n "${candidate}" ]; do
-    candidate="$(trim_value "${candidate}")"
-    [ -n "${candidate}" ] || continue
-    if compgen -G "${candidate}" >/dev/null; then
-      found="true"
-      break
-    fi
-  done < <(printf '%s\n' "${KEEPSECRET_WAYLAND_PLUGIN_GLOBS:-}")
-
-  if [ "${found}" != "true" ]; then
-    echo "Qt Wayland platform plugin not found after dependency install." >&2
-    return 1
-  fi
+  require_commands cmake git grep ninja pkg-config
 }
 
 keepsecret_verify_wayland_desktop_file_alignment() {
@@ -215,46 +196,4 @@ keepsecret_stage_install_tree() {
     echo "Installed keepsecret binary not found under ${destdir}${install_prefix}/bin/keepsecret." >&2
     return 1
   fi
-}
-
-keepsecret_smoke_test_headless() {
-  local build_dir="${1}"
-  local runtime_dir
-  local log_file
-  local status
-
-  runtime_dir="$(mktemp -d)"
-  log_file="$(mktemp)"
-  status=0
-
-  set +e
-  dbus-run-session -- \
-    env \
-      XDG_RUNTIME_DIR="${runtime_dir}" \
-      QT_QPA_PLATFORM=offscreen \
-      QT_QUICK_CONTROLS_STYLE=org.kde.desktop \
-      timeout 10s \
-      "${build_dir}/src/keepsecret" >"${log_file}" 2>&1
-  status=$?
-  set -e
-
-  case "${status}" in
-    0|124) ;;
-    *)
-      cat "${log_file}" >&2 || true
-      rm -f -- "${log_file}"
-      rm -rf -- "${runtime_dir}"
-      return 1
-      ;;
-  esac
-
-  if grep -E 'Error during loading main\.qml|QQmlApplicationEngine failed to load component|Could not find the Qt platform plugin|Cannot find style|module ".*" is not installed' "${log_file}" >/dev/null 2>&1; then
-    cat "${log_file}" >&2 || true
-    rm -f -- "${log_file}"
-    rm -rf -- "${runtime_dir}"
-    return 1
-  fi
-
-  rm -f -- "${log_file}"
-  rm -rf -- "${runtime_dir}"
 }

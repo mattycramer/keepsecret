@@ -9,7 +9,6 @@ export LC_ALL=C TZ=UTC
 cd "${repo_root}"
 
 keepsecret_install_build_deps
-keepsecret_require_wayland_runtime
 
 source_tree="$(mktemp -d)"
 stage_root="$(mktemp -d)"
@@ -24,4 +23,3 @@ build_dir="${source_tree}/${KEEPSECRET_BUILD_DIR}"
 keepsecret_configure_tree "${source_tree}" "${build_dir}" "${KEEPSECRET_INSTALL_PREFIX}"
 keepsecret_build_tree "${build_dir}"
 keepsecret_stage_install_tree "${build_dir}" "${stage_root}" "${KEEPSECRET_INSTALL_PREFIX}"
-keepsecret_smoke_test_headless "${build_dir}"

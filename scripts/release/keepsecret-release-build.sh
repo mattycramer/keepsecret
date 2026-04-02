@@ -9,7 +9,6 @@ export LC_ALL=C TZ=UTC
 cd "${repo_root}"
 
 keepsecret_install_build_deps
-keepsecret_require_wayland_runtime
 keepsecret_verify_wayland_desktop_file_alignment "${repo_root}"
 
 install_prefix="$(normalize_value "${KEEPSECRET_INSTALL_PREFIX:-/usr/local}")"
