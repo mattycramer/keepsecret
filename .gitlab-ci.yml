@@ -54,8 +54,5 @@ variables:
   APPLY_PATCHES_EXCLUDE: ""
   PATCH_RELEASE_DIR: "patches/release"
   PATCH_SERIES_FILE: "patches/release/series"
-  PATCH_SYNC_SOURCE_BRANCH: "gitlab/mcr/main"
-  GIT_BRANCH_PREFIX: "mcr"
-  GIT_BRANCH_RELEASE: "release"
   GL_CICD_RUNNER_BUILD: '${GL_CICD_RUNNER_UBUNTU}'
   GL_CICD_RUNNER_RELEASE: '${GL_CICD_RUNNER_UBUNTU}'
