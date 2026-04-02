@@ -5,7 +5,7 @@ set -eEuo pipefail
 repo_root="${CI_PROJECT_DIR:-$(pwd)}"
 source "${repo_root}/scripts/release/keepsecret-lib.sh"
 
-export LC_ALL=C TZ=UTC
+export LANG=C.UTF-8 LC_ALL=C.UTF-8 TZ=UTC
 cd "${repo_root}"
 
 keepsecret_install_build_deps
@@ -38,7 +38,7 @@ if ! printf '%s' "${package_name}" | grep -Eq '^[0-9A-Za-z._-]+$'; then
 fi
 
 tarball="${artifact_prefix}-${package_version}.tar.gz"
-checksum="${tarball}.sha256"
+checksum="${artifact_prefix}-sha256-checksums-${package_version}.txt"
 
 tar -czf "${tarball}" -C "${destdir}" .
 sha256sum "${tarball}" > "${checksum}"

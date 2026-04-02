@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 set -eEuo pipefail
+export LANG=C.UTF-8 LC_ALL=C.UTF-8 TZ=UTC
 
 log_step() {
   printf '\n==> %s\n' "$*"
@@ -87,6 +88,7 @@ keepsecret_verify_wayland_desktop_file_alignment() {
 
 keepsecret_resolve_package_version() {
   local tag
+  local project_name
   local version
 
   tag="$(normalize_value "${CI_COMMIT_TAG:-}")"
@@ -95,9 +97,14 @@ keepsecret_resolve_package_version() {
     return 1
   fi
 
+  project_name="$(normalize_value "${CI_PROJECT_NAME:-}")"
+
   case "${tag}" in
     *-v*)
       version="${tag##*-v}"
+      ;;
+    "${project_name}-"*)
+      version="${tag#"${project_name}-"}"
       ;;
     *)
       version="${tag}"

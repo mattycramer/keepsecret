@@ -24,8 +24,6 @@
 #include <KDBusService>
 #endif
 
-#include "keepsecretconfig.h"
-
 using namespace Qt::Literals::StringLiterals;
 
 #ifdef Q_OS_ANDROID
