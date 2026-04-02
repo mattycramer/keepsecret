@@ -149,7 +149,7 @@ keepsecret_apply_selected_release_patches() {
 }
 
 keepsecret_configure_compiler_cache() {
-  if command -v sccache >/dev/null 2>&1 && [ -d /cache/sccache ]; then
+  if command -v sccache >/dev/null 2>&1 && [ -d /cache/sccache ] && sccache --version >/dev/null 2>&1; then
     export SCCACHE_DIR='/cache/sccache'
     unset CCACHE_DIR || true
     unset CCACHE_BASEDIR || true
@@ -158,17 +158,10 @@ keepsecret_configure_compiler_cache() {
     return 0
   fi
 
-  if command -v ccache >/dev/null 2>&1 && [ -d /cache/ccache ]; then
-    unset SCCACHE_DIR || true
-    export CCACHE_DIR='/cache/ccache'
-    export KEEPSECRET_CMAKE_C_LAUNCHER='ccache'
-    export KEEPSECRET_CMAKE_CXX_LAUNCHER='ccache'
-    return 0
-  fi
-
   unset SCCACHE_DIR || true
   unset CCACHE_DIR || true
   unset CCACHE_BASEDIR || true
+  export CCACHE_DISABLE='1'
   export KEEPSECRET_CMAKE_C_LAUNCHER=''
   export KEEPSECRET_CMAKE_CXX_LAUNCHER=''
 }
@@ -177,10 +170,29 @@ keepsecret_configure_tree() {
   local source_dir="${1}"
   local build_dir="${2}"
   local install_prefix="${3}"
+  local -a cmake_env=()
+  local -a cmake_args=()
 
   keepsecret_configure_compiler_cache
   rm -rf -- "${build_dir}"
-  cmake \
+
+  cmake_env=(
+    env
+    -u CMAKE_C_COMPILER_LAUNCHER
+    -u CMAKE_CXX_COMPILER_LAUNCHER
+    -u CCACHE_DIR
+    -u CCACHE_BASEDIR
+    -u CCACHE_CONFIGPATH
+  )
+
+  if [ -n "${SCCACHE_DIR:-}" ]; then
+    cmake_env+=(SCCACHE_DIR="${SCCACHE_DIR}")
+  fi
+  if [ -n "${CCACHE_DISABLE:-}" ]; then
+    cmake_env+=(CCACHE_DISABLE="${CCACHE_DISABLE}")
+  fi
+
+  cmake_args=(
     -S "${source_dir}" \
     -B "${build_dir}" \
     -G Ninja \
@@ -190,6 +202,9 @@ keepsecret_configure_tree() {
     -D CMAKE_C_COMPILER_LAUNCHER="${KEEPSECRET_CMAKE_C_LAUNCHER}" \
     -D CMAKE_CXX_COMPILER_LAUNCHER="${KEEPSECRET_CMAKE_CXX_LAUNCHER}" \
     -W no-dev
+  )
+
+  "${cmake_env[@]}" cmake "${cmake_args[@]}"
 }
 
 keepsecret_build_tree() {
