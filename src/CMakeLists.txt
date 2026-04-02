@@ -55,6 +55,13 @@ target_link_libraries(keepsecret PRIVATE
     PkgConfig::LIBSECRET
 )
 
+# Debian Qt 6 packages expose some versioned include search paths that may not
+# exist on disk even though the real headers are present, which makes GCC/Clang
+# emit noisy -Wmissing-include-dirs warnings during generated-source builds.
+if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(keepsecret PRIVATE -Wno-missing-include-dirs)
+endif()
+
 if(TARGET KF6::DBusAddons AND NOT WIN32)
     target_link_libraries(keepsecret PUBLIC KF6::DBusAddons)
     target_compile_definitions(keepsecret PUBLIC -DHAVE_KDBUSADDONS)
@@ -80,7 +87,6 @@ kconfig_target_kcfg_file(keepsecret
     GENERATE_PROPERTIES
     PARENT_IN_CONSTRUCTOR
     SINGLETON
-    QML_REGISTRATION
 )
 
 install(TARGETS keepsecret ${KDE_INSTALL_TARGETS_DEFAULT_ARGS})

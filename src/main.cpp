@@ -24,8 +24,6 @@
 #include <KDBusService>
 #endif
 
-#include "keepsecretconfig.h"
-
 using namespace Qt::Literals::StringLiterals;
 
 #ifdef Q_OS_ANDROID
@@ -59,6 +57,10 @@ int main(int argc, char *argv[])
 
     KLocalizedString::setApplicationDomain("keepsecret");
     QCoreApplication::setOrganizationName(u"KDE"_s);
+    // Keep the Wayland app_id aligned with the installed desktop file so
+    // wlroots compositors such as labwc can match launcher metadata, icons,
+    // and window rules correctly.
+    QGuiApplication::setDesktopFileName(u"org.kde.keepsecret"_s);
 
     KAboutData aboutData(
         // The program name used internally.
