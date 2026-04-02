@@ -2,12 +2,10 @@
 workflow:
   rules:
     - if: '$CI_COMMIT_REF_PROTECTED == "true" && $CI_COMMIT_TAG =~ /(^[0-9]$|^[0-9A-Za-z][0-9A-Za-z._-]{0,33}[0-9]$)/'
-    - if: '$CI_COMMIT_REF_PROTECTED == "true" && $CI_COMMIT_BRANCH == "mcr/staging"'
     - if: '$CI_COMMIT_REF_PROTECTED == "true" && $CI_COMMIT_BRANCH == "mcr/release" && $GH_RELEASE_PUSH == "true"'
     - when: never
 
 stages:
-  - test
   - gitlab-release
   - github-sync
   - gitlab-cleanup
@@ -25,9 +23,6 @@ include:
   - project: '${GL_CICD_SHARED_PROJ}'
     ref: main
     file: '/gitlab/release.yml'
-  - project: '${GL_CICD_SHARED_PROJ}'
-    ref: main
-    file: '/keepsecret/test.yml'
   - project: '${GL_CICD_SHARED_PROJ}'
     ref: main
     file: '/keepsecret/release-build.yml'

@@ -113,20 +113,6 @@ keepsecret_resolve_package_version() {
   printf '%s' "${version}"
 }
 
-keepsecret_create_test_worktree() {
-  local repo_root="${1}"
-  local dest="${2}"
-
-  git -C "${repo_root}" worktree add --detach "${dest}" HEAD >/dev/null
-}
-
-keepsecret_cleanup_test_worktree() {
-  local repo_root="${1}"
-  local dest="${2}"
-
-  git -C "${repo_root}" worktree remove --force "${dest}" >/dev/null 2>&1 || rm -rf -- "${dest}"
-}
-
 keepsecret_prepare_release_patch_list() {
   local apply_patches
 
@@ -162,11 +148,37 @@ keepsecret_apply_selected_release_patches() {
   done
 }
 
+keepsecret_configure_compiler_cache() {
+  if command -v sccache >/dev/null 2>&1 && [ -d /cache/sccache ]; then
+    export SCCACHE_DIR='/cache/sccache'
+    unset CCACHE_DIR || true
+    unset CCACHE_BASEDIR || true
+    export KEEPSECRET_CMAKE_C_LAUNCHER='sccache'
+    export KEEPSECRET_CMAKE_CXX_LAUNCHER='sccache'
+    return 0
+  fi
+
+  if command -v ccache >/dev/null 2>&1 && [ -d /cache/ccache ]; then
+    unset SCCACHE_DIR || true
+    export CCACHE_DIR='/cache/ccache'
+    export KEEPSECRET_CMAKE_C_LAUNCHER='ccache'
+    export KEEPSECRET_CMAKE_CXX_LAUNCHER='ccache'
+    return 0
+  fi
+
+  unset SCCACHE_DIR || true
+  unset CCACHE_DIR || true
+  unset CCACHE_BASEDIR || true
+  export KEEPSECRET_CMAKE_C_LAUNCHER=''
+  export KEEPSECRET_CMAKE_CXX_LAUNCHER=''
+}
+
 keepsecret_configure_tree() {
   local source_dir="${1}"
   local build_dir="${2}"
   local install_prefix="${3}"
 
+  keepsecret_configure_compiler_cache
   rm -rf -- "${build_dir}"
   cmake \
     -S "${source_dir}" \
@@ -175,6 +187,8 @@ keepsecret_configure_tree() {
     -D CMAKE_BUILD_TYPE=Release \
     -D BUILD_TESTING=OFF \
     -D CMAKE_INSTALL_PREFIX="${install_prefix}" \
+    -D CMAKE_C_COMPILER_LAUNCHER="${KEEPSECRET_CMAKE_C_LAUNCHER}" \
+    -D CMAKE_CXX_COMPILER_LAUNCHER="${KEEPSECRET_CMAKE_CXX_LAUNCHER}" \
     -W no-dev
 }
 
