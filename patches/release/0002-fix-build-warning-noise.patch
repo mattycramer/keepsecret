@@ -1,0 +1,68 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Codex <codex@openai.com>
+Date: Thu, 2 Apr 2026 00:00:00 +0000
+Subject: [PATCH] Reduce keepsecret build warning noise
+
+Keep the repository source tree pristine and carry these build-noise fixes as a
+release overlay:
+- silence Debian Qt versioned include-dir noise
+- stop generating unused QML registration for KeepsecretConfig
+- remove the unused keepsecretconfig include
+- parenthesize bitwise status composition
+---
+ src/CMakeLists.txt      | 8 +++++++-
+ src/main.cpp            | 2 --
+ src/secretitemproxy.cpp | 2 +-
+ 3 files changed, 8 insertions(+), 4 deletions(-)
+
+diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
+--- a/src/CMakeLists.txt
++++ b/src/CMakeLists.txt
+@@ -55,6 +55,13 @@ target_link_libraries(keepsecret PRIVATE
+     PkgConfig::LIBSECRET
+ )
+ 
++# Debian Qt 6 packages expose some versioned include search paths that may not
++# exist on disk even though the real headers are present, which makes GCC/Clang
++# emit noisy -Wmissing-include-dirs warnings during generated-source builds.
++if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
++    target_compile_options(keepsecret PRIVATE -Wno-missing-include-dirs)
++endif()
++
+ if(TARGET KF6::DBusAddons AND NOT WIN32)
+     target_link_libraries(keepsecret PUBLIC KF6::DBusAddons)
+     target_compile_definitions(keepsecret PUBLIC -DHAVE_KDBUSADDONS)
+@@ -80,7 +87,6 @@ kconfig_target_kcfg_file(keepsecret
+     GENERATE_PROPERTIES
+     PARENT_IN_CONSTRUCTOR
+     SINGLETON
+-    QML_REGISTRATION
+ )
+ 
+ install(TARGETS keepsecret ${KDE_INSTALL_TARGETS_DEFAULT_ARGS})
+diff --git a/src/main.cpp b/src/main.cpp
+--- a/src/main.cpp
++++ b/src/main.cpp
+@@ -24,8 +24,6 @@
+ #include <KDBusService>
+ #endif
+ 
+-#include "keepsecretconfig.h"
+-
+ using namespace Qt::Literals::StringLiterals;
+ 
+ #ifdef Q_OS_ANDROID
+diff --git a/src/secretitemproxy.cpp b/src/secretitemproxy.cpp
+--- a/src/secretitemproxy.cpp
++++ b/src/secretitemproxy.cpp
+@@ -365,7 +365,7 @@ static void onItemUnlockFinished(GObject *source, GAsyncResult *result, gpointer
+     }
+ 
+     StateTracker::instance()->clearOperation(StateTracker::ItemUnlocking);
+-    StateTracker::instance()->setStatus(StateTracker::instance()->status() & (~StateTracker::State::ItemLocked) | StateTracker::State::ItemReady);
++    StateTracker::instance()->setStatus((StateTracker::instance()->status() & (~StateTracker::State::ItemLocked)) | StateTracker::State::ItemReady);
+ }
+ 
+ void SecretItemProxy::unlock()
+-- 
+2.49.0
